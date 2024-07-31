@@ -43,6 +43,16 @@ class Post extends Model
     }
 
     /**
+     * Get the comments for the post.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function comments()
+    {
+        return $this->hasMany(Comment::class);
+    }
+
+    /**
      * Add tags to the post.
      *
      * @param array $tags An array of tags to be added.
@@ -110,18 +120,14 @@ class Post extends Model
         $input = $request->all();
         $validator = Validator::make($input, [
             'title' => 'required|string',
-            'slug' => 'nullable|string',
+            'slug' => 'sometimes|string',
             'content' => 'required|string',
             'tags' => 'required|array',
-            'status' => 'required|string',
+            'status' => 'required|in:publish,draft',
         ]);
 
         if ($validator->fails()) {
             return Response::sendError('Request not valid.', $validator->errors()->all(), 422);
-        }
-
-        if ($input['status'] != 'publish' && $input['status'] != 'draft') {
-            return Response::sendError('Request not valid.', ["Field 'status' must be 'draft' or 'publish'"], 422);
         }
 
         if (!$request->filled('slug')) {
@@ -150,7 +156,7 @@ class Post extends Model
      */
     public static function show($slug): JsonResponse
     {
-        $post = Post::where('slug', $slug)->with('tags')->first();
+        $post = Post::where('slug', $slug)->with(['tags', 'comments'])->first();
 
         if (is_null($post)) {
             return Response::sendError('Post not found.');
@@ -193,18 +199,14 @@ class Post extends Model
         $input = $request->all();
         $validator = Validator::make($input, [
             'title' => 'required|string',
-            'slug' => 'nullable|string',
+            'slug' => 'sometimes|string',
             'content' => 'required|string',
             'tags' => 'required|array',
-            'status' => 'required|string',
+            'status' => 'required|in:publish,draft',
         ]);
 
         if ($validator->fails()) {
             return Response::sendError('Request not valid.', $validator->errors()->all());
-        }
-
-        if ($input['status'] != 'publish' && $input['status'] != 'draft') {
-            return Response::sendError('Request not valid.', ["Field 'status' must be 'draft' or 'publish'"], 422);
         }
 
         if (!$request->filled('slug') && $input['title'] != $post->title) {

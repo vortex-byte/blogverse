@@ -73,7 +73,6 @@ class PostController extends BaseController
     public function destroy(Post $post): JsonResponse
     {
         $post->delete();
-
         return $this->sendResponse([], 'Post deleted successfully.');
     }
 }
